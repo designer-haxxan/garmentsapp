@@ -10,6 +10,7 @@ import * as Posting from '../services/posting.js';
 import * as Printer from '../printer/printer.js';
 import * as Scanner from '../scanner/scanner.js';
 import { partyPicker } from './parties.js';
+import { SECTION_LIST, SIZE_PRESETS, WAIST_SIZES, colorHex } from '../garment/presets.js';
 
 const $ = window.jQuery;
 let st; let $root; let detachWedge = null; let payAccounts = [];
@@ -40,6 +41,7 @@ function layout() {
         <input type="search" class="form-control browse-q" placeholder="Filter products…" autocomplete="off">
         <button class="btn btn-light d-lg-none btn-close-browse" aria-label="Close"><i class="bi bi-x-lg"></i></button>
       </div>
+      <div class="chips mb-2 gender-chips"></div>
       <div class="chips mb-2 cat-chips"></div>
       <div class="product-grid"></div>
     </div>
@@ -122,18 +124,68 @@ async function renderHoldCount() {
 
 // ---------- browse grid ----------
 let browseCat = null;
+let browseGender = null;
+let groupsByKey = new Map();
+
+// Garment sizes in retail order (kids ages, letters, waist inches); anything else sorts after them.
+const SIZE_ORDER = [...SIZE_PRESETS.kids, ...SIZE_PRESETS.men, ...SIZE_PRESETS.women, ...WAIST_SIZES];
+const sizeRank = (s) => { const i = SIZE_ORDER.indexOf(s); return i >= 0 ? i : 1000; };
+
+// One tile per garment style (variants share a styleId); plain products stay on their own tile.
+function groupByStyle(list) {
+  const groups = new Map();
+  for (const p of list) {
+    const key = p.styleId ? 's:' + p.styleId : 'p:' + p.id;
+    if (!groups.has(key)) groups.set(key, { key, rep: p, variants: [] });
+    groups.get(key).variants.push(p);
+  }
+  return [...groups.values()];
+}
+
 function renderGrid() {
   const q = $root.find('.browse-q').val() || '';
-  const list = Catalog.searchProducts(q, { limit: 120, categoryId: browseCat });
+  const list = Catalog.searchProducts(q, { limit: 200, categoryId: browseCat, gender: browseGender });
   const cats = Catalog.allCategories();
-  $root.find('.cat-chips').html(`<span class="chip ${!browseCat ? 'active' : ''}" data-cat="">All</span>` + cats.map((c) => `<span class="chip ${browseCat === c.id ? 'active' : ''}" data-cat="${esc(c.id)}">${esc(c.name)}</span>`).join(''));
-  $root.find('.product-grid').html(list.length ? list.map((p) => `
-    <button class="product-tile" data-id="${esc(p.id)}">
-      ${p.image ? `<img src="${p.image}" alt="" loading="lazy">` : `<div class="ph tint-${UI.tintFor(p.name)}">${esc(UI.initials(p.name))}</div>`}
-      <div class="n">${esc(p.name)}</div>
-      <div class="p">${fmtNum(priceOf(p))}</div>
-      ${p.trackStock !== false ? `<div class="s">Stock: ${fmtQty(p.stock)}</div>` : ''}
-    </button>`).join('') : UI.emptyState('No products', 'box'));
+  const genders = [['', 'All', '#4f46e5'], ...SECTION_LIST.map((s) => [s.id, s.name, s.color])];
+  $root.find('.gender-chips').html(genders.map(([id, label, color]) => `<span class="chip gender-chip ${(browseGender || '') === id ? 'active' : ''}" data-gender="${id}" style="--chip:${color}">${esc(label)}</span>`).join(''));
+  $root.find('.cat-chips').html(`<span class="chip ${!browseCat ? 'active' : ''}" data-cat="">All types</span>` + cats.map((c) => `<span class="chip ${browseCat === c.id ? 'active' : ''}" data-cat="${esc(c.id)}">${esc(c.name)}</span>`).join(''));
+  const groups = groupByStyle(list);
+  groupsByKey = new Map(groups.map((g) => [g.key, g]));
+  $root.find('.product-grid').html(groups.length ? groups.map((g, i) => {
+    const p = g.rep; const multi = g.variants.length > 1;
+    const price = Math.min(...g.variants.map(priceOf));
+    const track = g.variants.some((v) => v.trackStock !== false);
+    const stock = g.variants.reduce((s, v) => s + (v.trackStock !== false ? v.stock || 0 : 0), 0);
+    const name = multi ? p.styleName || p.name : p.name;
+    return `<button class="product-tile ${p.gender ? 'sec-' + p.gender : ''}" data-key="${esc(g.key)}" style="animation-delay:${Math.min(i, 12) * 22}ms">
+      ${p.image ? `<img src="${p.image}" alt="" loading="lazy">` : `<div class="ph tint-${UI.tintFor(name)}">${esc(UI.initials(name))}</div>`}
+      <div class="n">${esc(name)}</div>
+      <div class="p">${multi ? 'from ' : ''}${fmtNum(price)}</div>
+      ${track ? `<div class="s">Stock: ${fmtQty(stock)}</div>` : ''}
+      ${multi ? `<span class="vtag">${g.variants.length} variants</span>` : ''}
+    </button>`;
+  }).join('') : UI.emptyState('No products', 'box'));
+}
+
+// Colour × size picker for a garment style. Tapping a size adds that exact variant to the cart.
+function openVariantPicker(g) {
+  const colors = [...new Set(g.variants.map((v) => v.color || '—'))];
+  const sizesOf = (c) => g.variants
+    .filter((v) => (v.color || '—') === c)
+    .sort((a, b) => sizeRank(a.size) - sizeRank(b.size) || String(a.size).localeCompare(String(b.size), undefined, { numeric: true }));
+  const rows = colors.map((c) => `<div class="vp-row">
+      <div class="vp-color"><span class="swatch" style="background:${colorHex(c)}"></span>${esc(c)}</div>
+      <div class="vp-sizes">${sizesOf(c).map((v) => {
+        const out = v.trackStock !== false && (v.stock || 0) <= 0;
+        return `<button class="vp-size ${out ? 'out' : ''}" data-id="${esc(v.id)}" title="${esc(v.name)}"><b>${esc(v.size || '—')}</b><small>${v.trackStock === false ? fmtNum(priceOf(v)) : fmtQty(v.stock) + ' left'}</small></button>`;
+      }).join('')}</div></div>`).join('');
+  const m = UI.modal({ title: g.rep.styleName || g.rep.name, body: `<div class="variant-picker">${rows}</div>
+    <div class="small text-body-secondary mt-3">Tap a size to add it to the sale. Grey sizes are out of stock.</div>` });
+  m.$el.on('click', '.vp-size', function () {
+    const p = Catalog.product(this.dataset.id);
+    m.close();
+    addProduct(p);
+  });
 }
 
 // ---------- cart operations ----------
@@ -453,8 +505,12 @@ export default {
     $root.on('click', '.btn-close-browse', () => $root.find('.pos').removeClass('show-browse'));
     $root.on('input', '.browse-q', debounce(renderGrid, 150));
     $root.on('click', '.cat-chips [data-cat]', function () { browseCat = this.dataset.cat || null; renderGrid(); });
+    $root.on('click', '.gender-chips [data-gender]', function () { browseGender = this.dataset.gender || null; renderGrid(); });
     $root.on('click', '.product-tile', function () {
-      addProduct(Catalog.product(this.dataset.id));
+      const g = groupsByKey.get(this.dataset.key);
+      if (!g) return;
+      if (g.variants.length > 1) return openVariantPicker(g);
+      addProduct(g.variants[0]);
       if (!window.matchMedia('(min-width: 992px)').matches) UI.toast('Added', 'success', 800);
     });
     detachWedge = Scanner.attachWedge(addByCode);

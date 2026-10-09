@@ -181,12 +181,12 @@ function rawbt(bytes) {
   window.location.href = `intent:base64,${b64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
 }
 
-export function printHTML(html, { page = 'auto', width = null } = {}) {
+export function printHTML(html, { page = 'auto', width = null, margin = '10mm' } = {}) {
   const area = document.getElementById('print-area');
   area.innerHTML = html;
   const style = document.createElement('style');
   style.id = 'print-page-style';
-  style.textContent = width ? `@page { size: ${width}mm auto; margin: 2mm; }` : `@page { size: ${page}; margin: 10mm; }`;
+  style.textContent = width ? `@page { size: ${width}mm auto; margin: 2mm; }` : `@page { size: ${page}; margin: ${margin}; }`;
   document.head.appendChild(style);
   const cleanup = () => { area.innerHTML = ''; style.remove(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
@@ -200,6 +200,15 @@ async function output(bytesFn, htmlFn, width) {
   if (method === 'bluetooth') return enqueue(async () => writeBytes(await bytesFn()));
   if (method === 'rawbt') return rawbt(await bytesFn());
   return printHTML(htmlFn(), { width });
+}
+
+// Print labels. 'browser' prints the label sheet at exact label size (any printer, incl. USB label printers).
+// 'bluetooth' and 'rawbt' send TSPL label commands to a thermal label printer instead.
+export async function printLabels({ html, tspl, w, h }) {
+  const method = getSettings().printer.method;
+  if (method === 'bluetooth') return enqueue(() => writeBytes(tspl()));
+  if (method === 'rawbt') return rawbt(tspl());
+  return printHTML(html(), { page: `${w}mm ${h}mm`, margin: '0' });
 }
 
 // Print a document receipt. Falls back to the browser dialog if the chosen printer fails.

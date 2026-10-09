@@ -6,6 +6,8 @@ import * as Auth from '../services/auth.js';
 import * as Catalog from '../services/catalog.js';
 import * as Posting from '../services/posting.js';
 import * as Scanner from '../scanner/scanner.js';
+import { openGarmentWizard } from './garment.js';
+import { SECTION_LIST, COLORS, sectionName } from '../garment/presets.js';
 
 const $ = window.jQuery;
 const UNITS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'pack', 'dozen', 'm', 'ft', 'pair', 'set'];
@@ -36,6 +38,10 @@ export async function editProduct(product = null, prefill = {}) {
         <button type="button" class="btn btn-outline-secondary btn-gen-bc" title="Generate" aria-label="Generate barcode"><i class="bi bi-magic"></i></button></div></div>
       <div class="col-6 col-md-2"><label class="form-label">Category</label><select name="categoryId" class="form-select"><option value="">—</option>${UI.options(cats, p.categoryId)}</select></div>
       <div class="col-6 col-md-2"><label class="form-label">Unit</label><input name="unit" class="form-control" list="unit-list" value="${esc(p.unit)}"><datalist id="unit-list">${UNITS.map((u) => `<option value="${u}">`).join('')}</datalist></div>
+      <div class="col-6 col-md-3"><label class="form-label">Section</label><select name="gender" class="form-select"><option value="">—</option>${SECTION_LIST.map((s) => `<option value="${s.id}" ${p.gender === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="col-6 col-md-3"><label class="form-label">Colour</label><input name="color" class="form-control" list="color-list" maxlength="40" value="${esc(p.color)}"><datalist id="color-list">${COLORS.map((c) => `<option value="${esc(c.name)}">`).join('')}</datalist></div>
+      <div class="col-6 col-md-3"><label class="form-label">Size</label><input name="size" class="form-control" maxlength="30" value="${esc(p.size)}"></div>
+      <div class="col-6 col-md-3"><label class="form-label">Brand</label><input name="brand" class="form-control" maxlength="60" value="${esc(p.brand)}"></div>
       <div class="col-4"><label class="form-label">Purchase price</label><input name="purchasePrice" class="form-control" inputmode="decimal" value="${p.purchasePrice ?? ''}"></div>
       <div class="col-4"><label class="form-label">Sale price</label><input name="salePrice" class="form-control" inputmode="decimal" value="${p.salePrice ?? ''}"></div>
       <div class="col-4"><label class="form-label">Wholesale</label><input name="wholesalePrice" class="form-control" inputmode="decimal" value="${p.wholesalePrice ?? ''}"></div>
@@ -103,9 +109,10 @@ async function manageCategories() {
 async function renderList(el) {
   const $el = $(el).off();
   const canEdit = Auth.can('product.edit');
-  $el.html(UI.pageHeader('Products', canEdit ? `<button class="btn btn-light btn-sm btn-cats"><i class="bi bi-tags"></i><span class="d-none d-sm-inline"> Categories</span></button><button class="btn btn-primary btn-sm btn-add"><i class="bi bi-plus-lg"></i> Add</button>` : '') + `
+  $el.html(UI.pageHeader('Products', canEdit ? `<button class="btn btn-light btn-sm btn-cats"><i class="bi bi-tags"></i><span class="d-none d-sm-inline"> Categories</span></button><button class="btn btn-outline-primary btn-sm btn-garment"><i class="bi bi-bag-plus"></i><span class="d-none d-sm-inline"> Garment</span></button><button class="btn btn-primary btn-sm btn-add"><i class="bi bi-plus-lg"></i> Add</button>` : '') + `
     <div class="filters">
       <div class="input-group flex-grow-2"><input type="search" class="form-control q" placeholder="Search name, SKU, barcode…"><button class="btn btn-outline-secondary btn-scan" aria-label="Scan"><i class="bi bi-upc-scan"></i></button></div>
+      <select class="form-select f-gender"><option value="">All sections</option>${SECTION_LIST.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
       <select class="form-select f-cat"><option value="">All categories</option>${UI.options(Catalog.allCategories(), '')}</select>
       <select class="form-select f-status"><option value="active">Active</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="inactive">Inactive</option><option value="all">All</option></select>
     </div>
@@ -114,8 +121,9 @@ async function renderList(el) {
   const draw = () => {
     const q = $el.find('.q').val();
     const cat = $el.find('.f-cat').val() || null;
+    const gender = $el.find('.f-gender').val() || null;
     const f = $el.find('.f-status').val();
-    const list = Catalog.searchProducts(q, { limit: Infinity, categoryId: cat, includeInactive: true }).filter((p) => {
+    const list = Catalog.searchProducts(q, { limit: Infinity, categoryId: cat, gender, includeInactive: true }).filter((p) => {
       if (f === 'all') return true;
       if (f === 'inactive') return !p.active;
       if (!p.active) return false;
@@ -129,15 +137,23 @@ async function renderList(el) {
       return `<button class="list-row" data-id="${esc(p.id)}">
         ${p.image ? `<img class="thumb" src="${p.image}" alt="" loading="lazy">` : UI.avatar(p.name)}
         <div class="main"><div class="title">${esc(p.name)} ${p.active ? '' : '<span class="badge text-bg-secondary">Inactive</span>'}</div>
-          <div class="sub">${esc([p.sku, p.barcode, Catalog.category(p.categoryId)?.name].filter(Boolean).join(' · ') || '—')}</div></div>
+          <div class="sub">${esc([sectionName(p.gender), p.color, p.size, p.sku, Catalog.category(p.categoryId)?.name].filter(Boolean).join(' · ') || '—')}</div></div>
         <div class="end"><div class="fw-semibold money">${money(p.salePrice)}</div>
           <div class="sub ${low ? 'text-danger fw-semibold' : ''}">${p.trackStock === false ? 'service' : `${fmtQty(p.stock)} ${esc(p.unit)}`}</div></div></button>`;
     }, 60, UI.emptyState('No products found', 'box-seam', canEdit ? '<button class="btn btn-primary btn-sm mt-3 btn-add">Add product</button>' : ''));
   };
   draw();
   $el.on('input', '.q', debounce(draw, 150));
-  $el.on('change', '.f-cat, .f-status', draw);
+  $el.on('change', '.f-cat, .f-status, .f-gender', draw);
   $el.on('click', '.btn-add', async () => { if (await editProduct()) draw(); });
+  $el.on('click', '.btn-garment', async () => {
+    const r = await openGarmentWizard();
+    if (!r) return;
+    draw();
+    if (await UI.confirmDialog(`${r.count} variant(s) created. Print their labels now?`, { okLabel: 'Open label designer', okClass: 'btn-primary' })) {
+      location.hash = `#/labels/style:${encodeURIComponent(r.styleId)}`;
+    }
+  });
   $el.on('click', '.btn-cats', async () => { await manageCategories(); renderList(el); });
   $el.on('click', '.btn-scan', async () => {
     const code = await Scanner.scan(); if (!code) return;
@@ -160,6 +176,7 @@ async function productActions(p, redraw) {
         <div class="col-6">Margin: <b>${p.salePrice ? fmtNum(((p.salePrice - p.purchasePrice) / p.salePrice) * 100) + '%' : '—'}</b></div><div class="col-6">Min stock: <b>${fmtQty(p.minStock || 0)}</b></div></div>
       <div class="d-grid gap-2">
         <button class="btn btn-primary btn-edit"><i class="bi bi-pencil me-1"></i>Edit product</button>
+        <a class="btn btn-outline-secondary" href="#/labels/${encodeURIComponent(p.id)}"><i class="bi bi-upc me-1"></i>Print label</a>
         <a class="btn btn-outline-secondary" href="#/stock/${encodeURIComponent(p.id)}"><i class="bi bi-clock-history me-1"></i>Stock ledger</a>
         ${Auth.can('stock.adjust') && p.trackStock !== false ? `<a class="btn btn-outline-secondary" href="#/stock/adjust/${encodeURIComponent(p.id)}"><i class="bi bi-sliders me-1"></i>Adjust stock</a>` : ''}
         ${Auth.can('product.delete') ? '<button class="btn btn-outline-danger btn-del"><i class="bi bi-trash me-1"></i>Delete</button>' : ''}

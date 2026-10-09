@@ -551,8 +551,8 @@ export async function deleteCategory(id) {
   await Catalog.refreshCategories();
 }
 
-export async function saveProduct(data) {
-  Auth.require('product.edit');
+// Creates or updates one product inside an open transaction. Shared by single products and garment batches.
+async function upsertProduct(t, ctx, data) {
   const name = clean(data.name, 150);
   if (!name) throw new AppError('Product name is required.');
   const id = data.id || uuid();
@@ -561,39 +561,67 @@ export async function saveProduct(data) {
   const wholesalePrice = round2(num(data.wholesalePrice));
   if (salePrice < 0 || purchasePrice < 0 || wholesalePrice < 0) throw new AppError('Prices cannot be negative.');
   const openingStock = round3(num(data.openingStock));
+  if (barcode) {
+    const dup = (await t.getAllByIndex('products', 'barcode', barcode)).find((p) => p.id !== id);
+    if (dup) throw new AppError(`Barcode already used by "${dup.name}".`);
+  }
+  if (sku) {
+    const dup = (await t.getAllByIndex('products', 'sku', sku)).find((p) => p.id !== id);
+    if (dup) throw new AppError(`SKU already used by "${dup.name}".`);
+  }
+  const old = data.id ? await t.get('products', id) : null;
+  if (data.id && !old) throw new AppError('Product not found.');
+  const now = nowISO();
+  const trackStock = data.trackStock !== false;
+  // Garment fields: keep the stored value when the caller does not send the field at all.
+  const keep = (key, max) => (data[key] === undefined ? (old?.[key] || '') : clean(data[key], max));
+  const p = { ...(old || { createdAt: now, stock: 0 }), id, name, nameLc: lc(name), sku, barcode, categoryId: data.categoryId || '', unit: clean(data.unit, 20) || 'pcs',
+    purchasePrice, salePrice, wholesalePrice, minStock: round3(num(data.minStock)), openingStock: trackStock ? openingStock : 0, trackStock,
+    image: data.image === undefined ? (old?.image || '') : data.image, active: data.active === false ? 0 : 1, updatedAt: now,
+    gender: keep('gender', 20), styleId: keep('styleId', 60), styleName: keep('styleName', 150), color: keep('color', 40), size: keep('size', 30), brand: keep('brand', 60) };
+  const openRef = 'open:' + id;
+  const [openMove] = await t.getAllByIndex('stockMoves', 'refId', openRef);
+  const newOpening = trackStock ? openingStock : 0;
+  const delta = round3(newOpening - (openMove?.qty || 0));
+  p.stock = round3((p.stock || 0) + delta);
+  await t.put('products', p);
+  if (openMove) await t.delete('stockMoves', openMove.id);
+  if (newOpening) {
+    await t.add('stockMoves', { id: uuid(), productId: id, date: openMove?.date || today(), qty: newOpening, type: 'opening', refId: openRef, refNo: 'OPENING', cost: purchasePrice, note: 'Opening stock', createdAt: now });
+  }
+  ctx.touched.add(id);
+  await audit(t, old ? 'update_product' : 'create_product', { name });
+  return p;
+}
+
+export async function saveProduct(data) {
+  Auth.require('product.edit');
   const ctx = newCtx();
-  const rec = await idb.write(['products', 'stockMoves', 'auditLog'], async (t) => {
-    if (barcode) {
-      const dup = (await t.getAllByIndex('products', 'barcode', barcode)).find((p) => p.id !== id);
-      if (dup) throw new AppError(`Barcode already used by "${dup.name}".`);
-    }
-    if (sku) {
-      const dup = (await t.getAllByIndex('products', 'sku', sku)).find((p) => p.id !== id);
-      if (dup) throw new AppError(`SKU already used by "${dup.name}".`);
-    }
-    const old = data.id ? await t.get('products', id) : null;
-    if (data.id && !old) throw new AppError('Product not found.');
-    const now = nowISO();
-    const trackStock = data.trackStock !== false;
-    const p = { ...(old || { createdAt: now, stock: 0 }), id, name, nameLc: lc(name), sku, barcode, categoryId: data.categoryId || '', unit: clean(data.unit, 20) || 'pcs',
-      purchasePrice, salePrice, wholesalePrice, minStock: round3(num(data.minStock)), openingStock: trackStock ? openingStock : 0, trackStock,
-      image: data.image === undefined ? (old?.image || '') : data.image, active: data.active === false ? 0 : 1, updatedAt: now };
-    const openRef = 'open:' + id;
-    const [openMove] = await t.getAllByIndex('stockMoves', 'refId', openRef);
-    const newOpening = trackStock ? openingStock : 0;
-    const delta = round3(newOpening - (openMove?.qty || 0));
-    p.stock = round3((p.stock || 0) + delta);
-    await t.put('products', p);
-    if (openMove) await t.delete('stockMoves', openMove.id);
-    if (newOpening) {
-      await t.add('stockMoves', { id: uuid(), productId: id, date: openMove?.date || today(), qty: newOpening, type: 'opening', refId: openRef, refNo: 'OPENING', cost: purchasePrice, note: 'Opening stock', createdAt: now });
-    }
-    ctx.touched.add(id);
-    await audit(t, old ? 'update_product' : 'create_product', { name });
-    return p;
-  });
+  const rec = await idb.write(['products', 'stockMoves', 'auditLog'], (t) => upsertProduct(t, ctx, data));
   await finish(ctx);
   return rec;
+}
+
+// Creates every colour × size variant of one garment style in ONE transaction, so a failure leaves none behind.
+// style: { styleName, gender, categoryId, brand, salePrice, purchasePrice, wholesalePrice, unit }
+// variants: [{ color, size, sku, barcode, openingStock }]
+export async function saveGarment(style, variants) {
+  Auth.require('product.edit');
+  if (!variants.length) throw new AppError('Choose at least one colour and size.');
+  const styleId = uuid();
+  const ctx = newCtx();
+  const recs = await idb.write(['products', 'stockMoves', 'auditLog'], async (t) => {
+    const out = [];
+    for (const v of variants) {
+      out.push(await upsertProduct(t, ctx, {
+        ...style, ...v, styleId,
+        name: `${style.styleName} - ${v.color} - ${v.size}`,
+      }));
+    }
+    return out;
+  });
+  await finish(ctx);
+  return recs;
 }
 
 export async function deleteProduct(id) {

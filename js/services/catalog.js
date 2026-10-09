@@ -58,12 +58,13 @@ export function findByCode(code) {
   return null;
 }
 
-export function searchProducts(q, { limit = 40, categoryId = null, includeInactive = false } = {}) {
+export function searchProducts(q, { limit = 40, categoryId = null, gender = null, includeInactive = false } = {}) {
   const terms = lc(q).split(/\s+/).filter(Boolean);
   const out = [];
   for (const p of products.values()) {
     if (!includeInactive && !p.active) continue;
     if (categoryId && p.categoryId !== categoryId) continue;
+    if (gender && p.gender !== gender) continue;
     if (terms.every((t) => p._s.includes(t))) {
       out.push(p);
       if (!terms.length && out.length >= limit * 4) break;

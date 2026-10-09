@@ -19,6 +19,7 @@ const ROUTES = {
   returns: [() => import('./modules/documents.js'), 'Returns', null, 'arrow-return-left', 'Main'],
   products: [() => import('./modules/products.js'), 'Products', null, 'box-seam', 'Inventory'],
   stock: [() => import('./modules/stock.js'), 'Stock', null, 'boxes', 'Inventory'],
+  labels: [() => import('./modules/labels.js'), 'Label Designer', null, 'upc', 'Inventory'],
   customers: [() => import('./modules/parties.js'), 'Customers', null, 'people', 'Parties'],
   suppliers: [() => import('./modules/parties.js'), 'Suppliers', 'purchase.manage', 'truck', 'Parties'],
   vouchers: [() => import('./modules/vouchers.js'), 'Cash Book & Payments', 'voucher.create', 'cash-coin', 'Accounts'],

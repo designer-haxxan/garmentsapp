@@ -1,7 +1,16 @@
-# SaleAPP POS
+# Garments Shop POS
 
-Offline-first, mobile-first Point of Sale as a static PWA (no build step).
+Offline-first, mobile-first Point of Sale for **kids', men's and women's garment shops** (Pakistan market), as a static PWA (no build step).
 HTML5 · ES modules · jQuery · Bootstrap 5 · Bootstrap Icons · IndexedDB · Service Worker · eposwala login API.
+
+## Garment features
+
+- **Sections**: Kids, Men and Women, shown as colour-coded chips in the POS and filters in Products.
+- **Garment wizard** (Products → *Garment*): one style, many colours and sizes. It creates every colour × size variant in one save, each with its own SKU and EAN-13 barcode. Size charts: kids by age (0-6M … 14Y), men and women by letter (S–3XL, XS–XXL), trousers and jeans by waist. Any other colour or size can be typed in.
+- **Variants in the POS**: a garment style is one tile ("from Rs …", "6 variants"). Tapping it opens a colour × size picker with stock per size, and the chosen variant goes into the cart.
+- **Label designer** (Inventory → *Label Designer*): label sizes (50×25, 40×30, 38×25, 60×40, 32×25 mm, or custom), show or hide shop name, brand, style, section, colour, size, SKU, price and barcode, text size, and a dashed cut line. The preview is the real label. The print list takes single products, a search result, or a whole style (every colour and size) with copies per item.
+- **Label printing**: *Browser print* (default) prints at the exact label size on any printer, including USB label printers. *Bluetooth* or *RawBT* (Settings → Printer) send TSPL commands to a thermal label printer (TSC, Xprinter, Gprinter and similar).
+- **Product fields**: section, colour, size and brand, plus *Print label* on every product.
 
 ## Features
 
@@ -26,10 +35,11 @@ js/app.js               Boot, auth gate + session expiry, router (lazy-loaded mo
 js/config.js            Login API base URL, support phone, app/schema/backup versions
 js/core/                utils, settings (LocalStorage), UI helpers, shared views
 js/db/                  IndexedDB wrapper (atomic multi-store transactions) + schema
-js/services/            auth, catalog (in-memory search index), posting engine, backup
-js/modules/             dashboard, pos (sale + purchase), documents, products, stock, parties, vouchers, accounts, settings, backup
+js/services/            auth, catalog (in-memory search index), posting engine (saveProduct, saveGarment), backup
+js/garment/presets.js   Sections (Kids/Men/Women), garment types, size charts, colour palette, label sizes
+js/modules/             dashboard, pos (sale + purchase, variant picker), documents, products, garment (wizard), labels (label designer), stock, parties, vouchers, accounts, settings, backup
 js/reports/             reports
-js/printer/             ESC/POS encoder, receipt builder, Bluetooth/RawBT/browser printing
+js/printer/             ESC/POS encoder, receipt builder, Bluetooth/RawBT/browser printing, EAN-13 barcode, label model (HTML + TSPL)
 js/scanner/             camera scanning + keyboard-wedge scanner detection
 ```
 

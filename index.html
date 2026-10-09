@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Offline-first point of sale with sales, purchases, stock, accounts and reports.">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Offline garment shop POS for Kids, Men and Women: sizes, colours, stock, barcode labels and receipts.">
+  <meta name="theme-color" content="#7c3aed">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://eposwala.com https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SaleAPP POS">
+  <meta name="apple-mobile-web-app-title" content="Garments POS">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -17,13 +17,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.css">
   <link rel="stylesheet" href="css/app.css">
-  <title>SaleAPP POS</title>
+  <title>Garments Shop POS</title>
 </head>
 <body>
   <!-- Splash / loading screen -->
   <div id="splash">
     <div class="splash-logo"><img src="icons/icon-192.png" alt=""></div>
-    <div class="splash-name mt-3">SaleAPP POS</div>
+    <div class="splash-name mt-3">Garments Shop POS</div>
     <div class="splash-bar" role="status"><span class="visually-hidden">Loading</span></div>
     <div id="splash-error" class="text-danger small mt-3 px-4 text-center"></div>
   </div>
@@ -36,49 +36,61 @@
         <section class="auth-hero">
           <div class="brand-row">
             <div class="brand-mark"><img src="icons/icon-192.png" alt=""></div>
-            <div><div class="name">SaleAPP POS</div><div class="tag">Point of Sale · Inventory · Accounts</div></div>
+            <div><div class="name">Garments Shop POS</div><div class="tag">Kids · Men · Women · Sizes &amp; colours</div></div>
           </div>
-          <h1>Run your whole business <span class="grad">from one app.</span></h1>
-          <p class="lead-sm">Sell, buy, track stock and keep your accounts — for any shop, wholesaler or distributor. Works even without internet.</p>
+          <h1>Run your garment shop <span class="grad">from one app.</span></h1>
+          <p class="lead-sm">Sell kids, men’s and women’s wear with sizes and colours, print barcode labels and keep your stock right. Works even without internet.</p>
           <ul class="feature-chips">
+            <li><i class="bi bi-rulers"></i>Sizes &amp; colours</li>
+            <li><i class="bi bi-upc"></i>Barcode labels</li>
             <li><i class="bi bi-wifi-off"></i>Works offline</li>
-            <li><i class="bi bi-box-seam"></i>Inventory</li>
-            <li><i class="bi bi-journal-check"></i>Accounts &amp; ledgers</li>
-            <li><i class="bi bi-upc-scan"></i>Barcode</li>
-            <li><i class="bi bi-printer"></i>Bluetooth receipts</li>
+            <li><i class="bi bi-boxes"></i>Stock</li>
+            <li><i class="bi bi-printer"></i>Receipts</li>
             <li><i class="bi bi-translate"></i><span class="ur-chip">اردو رسید</span></li>
           </ul>
           <div class="hero-art" aria-hidden="true">
             <svg viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="hg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity=".06"/></linearGradient>
-                <linearGradient id="hg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
-                <linearGradient id="hg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0abfc"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+                <linearGradient id="hgPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbcfe8"/><stop offset="1" stop-color="#ec4899"/></linearGradient>
+                <linearGradient id="hgBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfdbfe"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+                <linearGradient id="hgViolet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ddd6fe"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
               </defs>
-              <g class="float-a">
-                <rect x="40" y="30" width="330" height="220" rx="22" fill="url(#hg1)" stroke="rgba(255,255,255,.25)"/>
-                <circle cx="66" cy="54" r="5" fill="#f87171"/><circle cx="82" cy="54" r="5" fill="#fbbf24"/><circle cx="98" cy="54" r="5" fill="#34d399"/>
-                <rect x="64" y="78" width="120" height="12" rx="6" fill="rgba(255,255,255,.55)"/>
-                <rect x="64" y="98" width="80" height="22" rx="8" fill="#fff"/>
-                <rect class="bar" x="70"  y="170" width="26" height="54"  rx="6" fill="url(#hg2)" style="animation-delay:.1s"/>
-                <rect class="bar" x="110" y="150" width="26" height="74"  rx="6" fill="url(#hg2)" style="animation-delay:.2s"/>
-                <rect class="bar" x="150" y="180" width="26" height="44"  rx="6" fill="url(#hg2)" style="animation-delay:.3s"/>
-                <rect class="bar" x="190" y="130" width="26" height="94"  rx="6" fill="url(#hg2)" style="animation-delay:.4s"/>
-                <rect class="bar" x="230" y="145" width="26" height="79"  rx="6" fill="url(#hg2)" style="animation-delay:.5s"/>
-                <rect class="bar" x="270" y="110" width="26" height="114" rx="6" fill="url(#hg3)" style="animation-delay:.6s"/>
-                <rect class="bar" x="310" y="125" width="26" height="99"  rx="6" fill="url(#hg2)" style="animation-delay:.7s"/>
+              <rect x="30" y="30" width="460" height="270" rx="26" fill="url(#hg1)" stroke="rgba(255,255,255,.22)"/>
+              <rect x="50" y="66" width="420" height="9" rx="4.5" fill="rgba(255,255,255,.75)"/>
+              <!-- Kids frock on a hanger -->
+              <g class="swing" style="transform-origin:130px 70px">
+                <path d="M130 58 v-6 a8 8 0 1 1 8 8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <path d="M92 90 L130 66 L168 90" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M112 92 h36 l6 22 l16 92 h-80 l16 -92 z" fill="url(#hgPink)"/>
+                <circle cx="124" cy="140" r="3" fill="#fff" opacity=".8"/><circle cx="138" cy="158" r="3" fill="#fff" opacity=".8"/><circle cx="118" cy="176" r="3" fill="#fff" opacity=".8"/>
               </g>
+              <!-- Men's shirt on a hanger -->
+              <g class="swing" style="transform-origin:262px 70px;animation-delay:-1s">
+                <path d="M262 58 v-6 a8 8 0 1 1 8 8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <path d="M224 90 L262 66 L300 90" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M242 90 l-34 16 l-14 46 l18 6 l6 -18 v98 h72 v-98 l6 18 l18 -6 l-14 -46 l-34 -16 z" fill="url(#hgBlue)"/>
+                <path d="M248 90 l14 18 l14 -18" fill="#fff" opacity=".9"/>
+              </g>
+              <!-- Women's kurta on a hanger -->
+              <g class="swing" style="transform-origin:380px 70px;animation-delay:-2s">
+                <path d="M380 58 v-6 a8 8 0 1 1 8 8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <path d="M342 90 L380 66 L418 90" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M362 90 h36 l12 118 h-60 z" fill="url(#hgViolet)"/>
+                <path d="M368 96 q12 14 24 0" fill="none" stroke="#fff" stroke-width="2.5" opacity=".9"/>
+              </g>
+              <!-- Price tag with barcode (bottom right) -->
               <g class="float-b">
-                <path d="M392 70 h96 a10 10 0 0 1 10 10 v170 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 V80 a10 10 0 0 1 10 -10z" fill="#fff"/>
-                <rect x="410" y="92" width="64" height="9" rx="4.5" fill="#6366f1"/>
-                <rect x="404" y="114" width="76" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="128" width="58" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="142" width="70" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="156" width="48" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="178" width="76" height="2" fill="#c7d2fe"/>
-                <rect x="404" y="190" width="40" height="10" rx="5" fill="#111827"/><rect x="452" y="190" width="28" height="10" rx="5" fill="#16a34a"/>
-                <g transform="translate(410 208)"><rect width="2" height="18" fill="#111827"/><rect x="5" width="1" height="18" fill="#111827"/><rect x="9" width="3" height="18" fill="#111827"/><rect x="15" width="1" height="18" fill="#111827"/><rect x="19" width="2" height="18" fill="#111827"/><rect x="24" width="1" height="18" fill="#111827"/><rect x="28" width="3" height="18" fill="#111827"/><rect x="34" width="2" height="18" fill="#111827"/><rect x="39" width="1" height="18" fill="#111827"/><rect x="43" width="3" height="18" fill="#111827"/><rect x="49" width="2" height="18" fill="#111827"/><rect x="54" width="1" height="18" fill="#111827"/><rect x="58" width="3" height="18" fill="#111827"/></g>
+                <path d="M356 236 h96 l18 22 l-18 22 h-96 z" fill="#fff"/>
+                <circle cx="372" cy="258" r="4" fill="#7c3aed"/>
+                <text x="394" y="254" font-size="11" font-weight="800" fill="#4c1d95" font-family="Inter, sans-serif">Rs 1,250</text>
+                <g transform="translate(384 262)" fill="#111827"><rect width="2" height="14"/><rect x="4" width="1" height="14"/><rect x="7" width="3" height="14"/><rect x="12" width="1" height="14"/><rect x="15" width="2" height="14"/><rect x="20" width="1" height="14"/><rect x="23" width="3" height="14"/><rect x="28" width="2" height="14"/><rect x="32" width="1" height="14"/><rect x="35" width="3" height="14"/><rect x="40" width="2" height="14"/><rect x="44" width="1" height="14"/></g>
               </g>
-              <g class="float-b"><circle cx="34" cy="272" r="26" fill="#fbbf24"/><circle cx="34" cy="272" r="18" fill="none" stroke="#fde68a" stroke-width="3"/><text x="34" y="279" text-anchor="middle" font-size="18" font-weight="800" fill="#92400e">Rs</text></g>
-              <g class="float-a"><rect x="300" y="262" width="62" height="50" rx="8" fill="#22d3ee"/><path d="M300 278 h62" stroke="#0e7490" stroke-width="3"/><rect x="322" y="262" width="18" height="16" fill="#67e8f9"/></g>
+              <!-- Size chips -->
+              <g class="float-a">
+                <rect x="58" y="236" width="56" height="26" rx="13" fill="#fde68a"/><text x="86" y="253" font-size="12" font-weight="800" text-anchor="middle" fill="#92400e" font-family="Inter, sans-serif">4Y · S</text>
+                <rect x="58" y="270" width="44" height="26" rx="13" fill="#a7f3d0"/><text x="80" y="287" font-size="12" font-weight="800" text-anchor="middle" fill="#065f46" font-family="Inter, sans-serif">M</text>
+              </g>
             </svg>
           </div>
         </section>
@@ -112,7 +124,7 @@
   <!-- Application -->
   <div id="view-app" class="d-none">
     <aside id="sidebar" class="d-none d-lg-flex flex-column">
-      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">SaleAPP POS</span></div>
+      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">Garments Shop POS</span></div>
       <nav class="nav flex-column flex-grow-1 overflow-auto nav-menu" aria-label="Main"></nav>
     </aside>
     <div class="app-main">
@@ -137,7 +149,7 @@
       <a href="#/dashboard" data-route="dashboard"><i class="bi bi-house"></i><span>Home</span></a>
       <a href="#/sales" data-route="sales"><i class="bi bi-receipt"></i><span>Sales</span></a>
       <a href="#/pos" data-route="pos" class="nav-sell"><i class="bi bi-cart-plus-fill"></i><span>Sell</span></a>
-      <a href="#/products" data-route="products"><i class="bi bi-box-seam"></i><span>Products</span></a>
+      <a href="#/products" data-route="products"><i class="bi bi-bag"></i><span>Garments</span></a>
       <a href="#" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas"><i class="bi bi-grid"></i><span>More</span></a>
     </nav>
   </div>

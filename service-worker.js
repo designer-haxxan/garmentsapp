@@ -2,7 +2,7 @@
    Bump VERSION whenever any cached file changes; clients update automatically. */
 // Cache names are namespaced: other apps on designer-haxxan.github.io share Cache Storage with this one.
 const APP_ID = 'disterp';
-const VERSION = `${APP_ID}-v1.3.2`;
+const VERSION = `${APP_ID}-v2.0.0`;
 const isOwnCache = (key) => key.startsWith(`${APP_ID}-`) || /^saleapp-v/.test(key); // saleapp-v* = this app's older builds
 const SHELL = [
   './', './index.html', './manifest.json', './css/app.css',
@@ -12,7 +12,8 @@ const SHELL = [
   './js/db/idb.js', './js/db/schema.js',
   './js/modules/accounts.js', './js/modules/backup.js', './js/modules/dashboard.js', './js/modules/documents.js',
   './js/modules/parties.js', './js/modules/pos.js', './js/modules/products.js', './js/modules/settings.js', './js/modules/stock.js', './js/modules/vouchers.js',
-  './js/printer/escpos.js', './js/printer/printer.js', './js/printer/raster.js', './js/printer/receipt.js',
+  './js/modules/garment.js', './js/modules/labels.js', './js/garment/presets.js',
+  './js/printer/escpos.js', './js/printer/printer.js', './js/printer/raster.js', './js/printer/receipt.js', './js/printer/barcode.js', './js/printer/label.js',
   './js/reports/reports.js', './js/scanner/scanner.js',
   './js/services/auth.js', './js/services/backup.js', './js/services/catalog.js', './js/services/posting.js',
 ];
