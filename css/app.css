@@ -108,7 +108,9 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes growRight { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes spin { to { transform: rotate(360deg); } }
-.page-enter > * { animation: fadeUp .35s var(--ease) both; }
+/* "backwards" (not "both"): a finished animation must not keep its transform, or every section becomes a
+   stacking context and paints over dropdown menus in the sections above it. */
+.page-enter > * { animation: fadeUp .35s var(--ease) backwards; }
 .page-enter > *:nth-child(2) { animation-delay: .04s; }
 .page-enter > *:nth-child(3) { animation-delay: .08s; }
 .page-enter > *:nth-child(4) { animation-delay: .12s; }

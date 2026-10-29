@@ -74,7 +74,7 @@ async function renderDoc(el, kind, id) {
       <div class="dropdown"><button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-label="Actions"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end">
         ${canEdit ? `<li><a class="dropdown-item" href="#/${k.editRoute}/edit/${encodeURIComponent(id)}"><i class="bi bi-pencil me-2"></i>Edit</a></li>` : ''}
         ${canReturn ? `<li><button class="dropdown-item btn-return"><i class="bi bi-arrow-return-left me-2"></i>Return items</button></li>` : ''}
-        ${canVoid ? `<li><button class="dropdown-item text-danger btn-void"><i class="bi bi-x-circle me-2"></i>Void</button></li>` : ''}
+        ${canVoid ? `<li><button class="dropdown-item text-danger btn-void"><i class="bi bi-trash me-2"></i>${kind === 'sale' ? 'Delete sale' : 'Delete purchase'}</button></li>` : ''}
         ${!canEdit && !canReturn && !canVoid ? '<li><span class="dropdown-item-text small text-body-secondary">No actions available</span></li>' : ''}
       </ul></div>`, `#/${k.list}`) + `
     ${isVoid ? `<div class="alert alert-danger">Voided ${fmtDateTime(d.voidedAt)} by ${esc(d.voidedBy)}${d.voidReason ? ': ' + esc(d.voidReason) : ''}. Stock and ledger effects were reversed.</div>` : ''}
@@ -114,8 +114,10 @@ async function renderDoc(el, kind, id) {
   $el.on('click', '.btn-print', () => Printer.printDocument(kind, d));
   $el.on('click', '.btn-return', async () => { const r = await returnDialog(kind, d); if (r) location.hash = `#/returns/${kind}/${r.id}`; });
   $el.on('click', '.btn-void', async () => {
-    const reason = await UI.formModal({ title: `Void ${d.number}`, submitLabel: 'Void document', submitClass: 'btn-danger',
-      body: `<p>Voiding reverses stock and all ledger entries of this ${k.label.toLowerCase()}. The number stays reserved for audit purposes. This cannot be undone.</p><label class="form-label">Reason</label><input name="reason" class="form-control" required>`,
+    // Deleting a sale or purchase voids it: stock and ledger entries are reversed in one transaction, and the
+    // record and its number stay in the books for audit. A true row delete would unbalance the ledger.
+    const reason = await UI.formModal({ title: `Delete ${d.number}?`, submitLabel: `Delete ${k.label.toLowerCase()}`, submitClass: 'btn-danger',
+      body: `<p>This deletes the ${k.label.toLowerCase()} from the books. Its stock and ledger entries are reversed, and it stays in the list marked <b>Void</b> for audit. The number is not reused. This cannot be undone.</p><label class="form-label">Reason</label><input name="reason" class="form-control" required placeholder="e.g. Entered by mistake">`,
       onSubmit: (v) => { if (!v.reason.trim()) throw new AppError('Enter a reason.'); return v.reason; } });
     if (!reason) return;
     try { await Posting.voidDocument(kind, id, reason); UI.toast(`${d.number} voided`); renderDoc(el, kind, id); } catch (e) { UI.toastError(e); }
